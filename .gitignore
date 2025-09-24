@@ -1,6 +1,4 @@
 # Miscellaneous
-*.exe
-*.bat
 *.md
 *.class
 *.log
@@ -14,8 +12,6 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
-/journeys
-.cursor
 
 # IntelliJ related
 *.iml
@@ -48,3 +44,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Environment variables
+.env
+.env.local
