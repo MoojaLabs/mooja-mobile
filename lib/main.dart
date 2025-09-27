@@ -8,7 +8,7 @@ import 'core/initialization/app_initializer.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await dotenv.load(fileName: ".env");
+  await dotenv.load(fileName: '.env');
 
   await setupServiceLocator();
 

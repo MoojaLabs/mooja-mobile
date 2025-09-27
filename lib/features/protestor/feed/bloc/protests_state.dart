@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../../core/models/protest_model.dart';
+import '../../../../core/models/protest_model.dart';
 
 /// States for the ProtestsBloc
 abstract class ProtestsState extends Equatable {

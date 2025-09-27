@@ -1,81 +1,67 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-import '../../core/themes/theme_exports.dart';
-import '../../core/widgets/buttons/app_button.dart';
-import '../../core/widgets/buttons/app_back_button.dart';
-import '../../core/router/app_router.dart';
-import '../../core/widgets/inputs/app_dropdown.dart';
-import '../../core/widgets/app_chip.dart';
-import '../../core/di/service_locator.dart';
+import '../../../../core/themes/theme_exports.dart';
+import '../../../../core/widgets/buttons/app_button.dart';
+import '../../../../core/widgets/buttons/app_back_button.dart';
+import '../../../../core/widgets/inputs/app_input.dart';
+import '../../../../core/widgets/app_chip.dart';
+import '../../../../core/router/app_router.dart';
+import '../../../../core/di/service_locator.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../core/services/storage_service.dart';
-import 'verification_cubit.dart';
+import '../../../../core/services/storage_service.dart';
+import '../bloc/verification_cubit.dart';
 
-class SocialMediaSelectionPage extends StatefulWidget {
-  const SocialMediaSelectionPage({super.key});
+class OrganizationNamePage extends StatefulWidget {
+  const OrganizationNamePage({super.key});
 
   @override
-  State<SocialMediaSelectionPage> createState() =>
-      _SocialMediaSelectionPageState();
+  State<OrganizationNamePage> createState() => _OrganizationNamePageState();
 }
 
-class _SocialMediaSelectionPageState extends State<SocialMediaSelectionPage> {
-  // Custom dropdown state
-  String? _selectedSocialMedia;
+class _OrganizationNamePageState extends State<OrganizationNamePage> {
+  final TextEditingController _organizationNameController =
+      TextEditingController();
+  bool _isLoading = false;
+  String? _errorText;
 
-  // Social media options with icons
-  final List<AppDropdownItem<String>> _socialMediaOptions = [
-    AppDropdownItem(
-      value: 'instagram',
-      label: 'Instagram',
-      leftIcon: Image.asset(
-        'assets/images/instagram.png',
-        width: 22,
-        height: 22,
-        fit: BoxFit.contain,
-      ),
-    ),
-    AppDropdownItem(
-      value: 'facebook',
-      label: 'Facebook',
-      leftIcon: Image.asset(
-        'assets/images/facebook.png',
-        width: 22,
-        height: 22,
-        fit: BoxFit.contain,
-      ),
-    ),
-    AppDropdownItem(
-      value: 'x',
-      label: 'X (Twitter)',
-      leftIcon: Image.asset(
-        'assets/images/x.png',
-        width: 22,
-        height: 22,
-        fit: BoxFit.contain,
-      ),
-    ),
-  ];
+  @override
+  void dispose() {
+    _organizationNameController.dispose();
+    super.dispose();
+  }
 
   void _handleContinue() {
-    if (_selectedSocialMedia == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a social media platform')),
-      );
+    final organizationName = _organizationNameController.text.trim();
+
+    // Validate input
+    if (organizationName.isEmpty) {
+      setState(() {
+        _errorText = 'Please enter your organization name';
+      });
       return;
     }
 
-    // Navigate to username input screen
+    if (organizationName.length < 2) {
+      setState(() {
+        _errorText = 'Organization name must be at least 2 characters';
+      });
+      return;
+    }
+
+    // Clear any previous errors
+    setState(() {
+      _errorText = null;
+      _isLoading = true;
+    });
+
+    // Persist org name and navigate
     final storage = sl<StorageService>();
-    storage.savePendingSocialPlatform(_selectedSocialMedia!).whenComplete(
-      () async {
-        await context.read<VerificationCubit>().setPlatform(
-          _selectedSocialMedia!,
-        );
-        if (!mounted) return;
-        context.pushToSocialUsername(_selectedSocialMedia!);
-      },
-    );
+    storage.savePendingOrgName(organizationName).whenComplete(() async {
+      await context.read<VerificationCubit>().setOrgName(organizationName);
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      context.pushToSocialMediaSelection();
+    });
   }
 
   @override
@@ -96,7 +82,7 @@ class _SocialMediaSelectionPageState extends State<SocialMediaSelectionPage> {
                       child: Transform.rotate(
                         angle: -10 * math.pi / 180,
                         child: AppChip(
-                          label: 'step 01',
+                          label: 'step 02',
                           backgroundColor: AppColors.lemon,
                         ),
                       ),
@@ -116,7 +102,7 @@ class _SocialMediaSelectionPageState extends State<SocialMediaSelectionPage> {
                   children: [
                     // Main title
                     Text(
-                      'Where did you promote your protests before ?',
+                      'Organization\'s name',
                       style: AppTypography.h1SemiBold.copyWith(
                         color: ThemeColors.textPrimary(context),
                       ),
@@ -125,22 +111,13 @@ class _SocialMediaSelectionPageState extends State<SocialMediaSelectionPage> {
 
                     const SizedBox(height: 24),
 
-                    // Custom Dropdown
-                    AppDropdown<String>(
-                      items: _socialMediaOptions,
-                      value: _selectedSocialMedia,
-                      hint: 'e.g Instagram',
-                      rightIcon: Image.asset(
-                        'assets/icons/down.png',
-                        width: 22,
-                        height: 22,
-                        fit: BoxFit.contain,
-                      ),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          _selectedSocialMedia = newValue;
-                        });
-                      },
+                    // Input field
+                    AppInput(
+                      controller: _organizationNameController,
+                      hintText: 'What\'s your organization\'s name ?',
+                      keyboardType: TextInputType.text,
+                      autofocus: true,
+                      errorText: _errorText,
                     ),
                   ],
                 ),
@@ -183,9 +160,8 @@ class _SocialMediaSelectionPageState extends State<SocialMediaSelectionPage> {
                   // Continue button
                   AppButton.primary(
                     text: 'Continue',
-                    onPressed: _selectedSocialMedia != null
-                        ? _handleContinue
-                        : null,
+                    onPressed: _isLoading ? null : _handleContinue,
+                    isLoading: _isLoading,
                     isFullWidth: true,
                   ),
                 ],

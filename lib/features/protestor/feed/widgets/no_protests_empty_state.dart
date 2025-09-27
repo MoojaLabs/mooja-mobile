@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../../core/themes/theme_exports.dart';
-import '../../../core/constants/countries.dart';
+import '../../../../core/themes/theme_exports.dart';
+import '../../../../core/constants/countries.dart';
 
 class NoProtestsEmptyState extends StatelessWidget {
   final Country selectedCountry;

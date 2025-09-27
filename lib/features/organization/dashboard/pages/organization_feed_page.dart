@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../core/themes/theme_exports.dart';
-import '../../core/router/app_router.dart';
-import '../../core/di/service_locator.dart';
-import '../../core/services/user_context_service.dart';
+import '../../../../core/themes/theme_exports.dart';
+import '../../../../core/router/app_router.dart';
+import '../../../../core/di/service_locator.dart';
+import '../../../../core/services/user_context_service.dart';
 
 /// Organization-specific feed page with NGO tools and features
 class OrganizationFeedPage extends StatelessWidget {

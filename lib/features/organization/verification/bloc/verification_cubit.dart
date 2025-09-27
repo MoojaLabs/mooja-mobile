@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../core/services/api_service.dart';
-import '../../core/services/storage_service.dart';
-import '../../core/domain/domain_objects.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/storage_service.dart';
+import '../../../../core/domain/domain_objects.dart';
 
 class VerificationState {
   final String? countryCode;

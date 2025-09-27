@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../core/di/service_locator.dart';
-import '../../core/services/api_service.dart';
-import '../../core/services/storage_service.dart';
-import '../../core/themes/theme_exports.dart';
-import '../../core/widgets/app_chip.dart';
-import '../../core/widgets/buttons/app_button.dart';
-import '../../core/router/app_router.dart';
-import 'timeline_cubit.dart';
+import '../../../../core/di/service_locator.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/storage_service.dart';
+import '../../../../core/themes/theme_exports.dart';
+import '../../../../core/widgets/app_chip.dart';
+import '../../../../core/widgets/buttons/app_button.dart';
+import '../../../../core/router/app_router.dart';
+import '../bloc/timeline_cubit.dart';
 
 class VerificationTimelinePage extends StatelessWidget {
   final String? username; // Kept for compatibility

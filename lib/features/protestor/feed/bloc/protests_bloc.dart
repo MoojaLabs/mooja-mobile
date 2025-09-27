@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../core/services/api_service.dart';
-import '../../../core/models/protest_model.dart';
-import '../../../core/domain/domain_objects.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/models/protest_model.dart';
+import '../../../../core/domain/domain_objects.dart';
 import 'protests_event.dart';
 import 'protests_state.dart';
 

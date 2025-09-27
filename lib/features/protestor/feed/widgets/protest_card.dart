@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../core/themes/theme_exports.dart';
-import '../../../core/models/protest_model.dart';
-import '../../../core/services/api_service.dart';
+import '../../../../core/themes/theme_exports.dart';
+import '../../../../core/models/protest_model.dart';
+import '../../../../core/services/api_service.dart';
 
 class ProtestCard extends StatelessWidget {
   final Protest protest;
@@ -27,7 +27,10 @@ class ProtestCard extends StatelessWidget {
 
     // Check if it's a server upload path (relative URL)
     if (pictureUrl.startsWith('/uploads/')) {
-      final baseUrl = ApiService.baseUrl.replaceAll('/api', ''); // Remove /api suffix
+      final baseUrl = ApiService.baseUrl.replaceAll(
+        '/api',
+        '',
+      ); // Remove /api suffix
       return NetworkImage('$baseUrl$pictureUrl');
     }
 

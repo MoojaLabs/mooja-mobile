@@ -71,6 +71,7 @@ lib/
 │   ├── constants/                    # App constants
 │   ├── di/                           # Dependency injection
 │   ├── domain/                       # Domain layer & validation
+│   ├── initialization/               # App initialization
 │   ├── models/                       # Data models
 │   ├── navigation/                   # Navigation utilities
 │   ├── router/                       # App routing (GoRouter)
@@ -78,10 +79,26 @@ lib/
 │   ├── state/                        # Global state management
 │   ├── themes/                       # Design system
 │   └── widgets/                      # Reusable UI components
-└── features/                         # Feature modules
-    ├── auth/                         # Authentication flow
-    ├── home/                         # Feed & protests
-    ├── intro/                        # Onboarding
+└── features/                         # Feature modules (user-type organized)
+    ├── auth/                         # Authentication (login/signup only)
+    │   ├── bloc/                     # Auth state management
+    │   ├── login_page.dart
+    │   └── signup_page.dart
+    ├── intro/                        # Onboarding flow (shared)
+    │   ├── intro_page.dart
+    │   └── widgets/
+    ├── organization/                 # Organization-specific features
+    │   ├── verification/             # Organization verification flow
+    │   │   ├── pages/                # 8 verification pages
+    │   │   ├── widgets/              # Verification-specific widgets
+    │   │   └── bloc/                 # Verification state management
+    │   └── dashboard/                # Organization dashboard
+    │       └── pages/                # Dashboard pages & tools
+    ├── protestor/                    # Protestor-specific features
+    │   └── feed/                     # Protestor feed functionality
+    │       ├── pages/                # Feed pages
+    │       ├── widgets/              # Feed-specific widgets
+    │       └── bloc/                 # Feed state management
 ```
 
 ## Available Scripts

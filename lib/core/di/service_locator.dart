@@ -3,9 +3,9 @@ import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../services/auth_service.dart';
 import '../services/user_context_service.dart';
-import '../../features/home/bloc/protests_bloc.dart';
+import '../../features/protestor/feed/bloc/protests_bloc.dart';
 import '../../features/auth/bloc/auth_bloc.dart';
-import '../../features/auth/verification_cubit.dart';
+import '../../features/organization/verification/bloc/verification_cubit.dart';
 
 /// Global service locator instance
 final GetIt sl = GetIt.instance;

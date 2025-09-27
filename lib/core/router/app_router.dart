@@ -8,21 +8,20 @@ import '../constants/flow_origin.dart';
 import '../../features/intro/intro_page.dart';
 import '../../features/auth/login_page.dart';
 import '../../features/auth/signup_page.dart';
-import '../../features/auth/country_selection_page.dart';
-import '../../features/auth/organization_name_page.dart';
-import '../../features/auth/social_media_selection_page.dart';
-import '../../features/auth/social_username_page.dart';
-import '../../features/auth/verification_timeline_page.dart';
-import '../../features/auth/status_lookup_page.dart';
-import '../../features/auth/code_verification_page.dart';
-import '../../features/auth/org_registration_page.dart';
 import '../../features/auth/bloc/auth_bloc.dart';
-import '../../features/auth/verification_cubit.dart';
+import '../../features/organization/verification/pages/country_selection_page.dart';
+import '../../features/organization/verification/pages/organization_name_page.dart';
+import '../../features/organization/verification/pages/social_media_selection_page.dart';
+import '../../features/organization/verification/pages/social_username_page.dart';
+import '../../features/organization/verification/pages/verification_timeline_page.dart';
+import '../../features/organization/verification/pages/status_lookup_page.dart';
+import '../../features/organization/verification/pages/code_verification_page.dart';
+import '../../features/organization/verification/pages/org_registration_page.dart';
+import '../../features/organization/verification/bloc/verification_cubit.dart';
 import '../../features/home/widgets/feed_shell.dart';
-import '../../features/home/protestor_feed_page.dart';
-import '../../features/home/organization_feed_page.dart';
-import '../../features/placeholder/placeholder_screen.dart';
 import '../../features/home/widgets/tab_navigation.dart';
+import '../../features/protestor/feed/pages/protestor_feed_page.dart';
+import '../../features/organization/dashboard/pages/organization_feed_page.dart';
 import '../../features/intro/widgets/org_verification_modal.dart';
 import '../../features/intro/widgets/not_eligible_modal.dart';
 import '../navigation/navigation_guard.dart';
@@ -45,7 +44,6 @@ abstract class AppRoutes {
   static const home = '/home';
   static const protestorFeed = '/home/protestor';
   static const organizationFeed = '/home/organization';
-  static const placeholder = '/placeholder';
 }
 
 // Main router configuration
@@ -235,12 +233,6 @@ class AppRouter {
           ),
         ],
       ),
-
-      GoRoute(
-        path: AppRoutes.placeholder,
-        name: 'placeholder',
-        builder: (context, state) => const PlaceholderScreen(),
-      ),
     ],
 
     redirect: (BuildContext context, GoRouterState state) async {
@@ -394,7 +386,7 @@ extension NavigationExtensions on BuildContext {
   }) => GoRouter.of(this).push<T>(AppRoutes.countrySelection, extra: origin);
   Future<T?> pushToCountrySelectionForOrg<T>() => GoRouter.of(
     this,
-  ).push<T>("${AppRoutes.countrySelection}?orgFlow=1&stepLabel=step%2001");
+  ).push<T>('${AppRoutes.countrySelection}?orgFlow=1&stepLabel=step%2001');
   void goToOrganizationName() => go(AppRoutes.organizationName);
   Future<T?> pushToOrganizationName<T>() =>
       GoRouter.of(this).push<T>(AppRoutes.organizationName);
@@ -427,7 +419,6 @@ extension NavigationExtensions on BuildContext {
   void goToHome() => go(AppRoutes.protestorFeed);
   void goToProtestorFeed() => go(AppRoutes.protestorFeed);
   void goToOrganizationFeed() => go(AppRoutes.organizationFeed);
-  void goToPlaceholder() => go(AppRoutes.placeholder);
 
   // Check current route
   bool get isLoginPage =>
@@ -440,8 +431,6 @@ extension NavigationExtensions on BuildContext {
       GoRouterState.of(this).matchedLocation == AppRoutes.countrySelection;
   bool get isHomePage =>
       GoRouterState.of(this).matchedLocation == AppRoutes.protestorFeed;
-  bool get isPlaceholderPage =>
-      GoRouterState.of(this).matchedLocation == AppRoutes.placeholder;
 
   // Get route parameters
   String? getParam(String name) => GoRouterState.of(this).pathParameters[name];

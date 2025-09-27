@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-import '../../core/themes/theme_exports.dart';
-import '../../core/widgets/buttons/app_button.dart';
-import '../../core/widgets/buttons/app_back_button.dart';
-import '../../core/widgets/inputs/app_input.dart';
-import '../../core/widgets/app_chip.dart';
-import '../../core/services/api_service.dart';
-import 'verification_cubit.dart';
+import '../../../../core/themes/theme_exports.dart';
+import '../../../../core/widgets/buttons/app_button.dart';
+import '../../../../core/widgets/buttons/app_back_button.dart';
+import '../../../../core/widgets/inputs/app_input.dart';
+import '../../../../core/widgets/app_chip.dart';
+import '../../../../core/services/api_service.dart';
+import '../bloc/verification_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../core/router/app_router.dart';
+import '../../../../core/router/app_router.dart';
 
 class SocialUsernamePage extends StatefulWidget {
   final String selectedSocialMedia;
@@ -80,7 +80,7 @@ class _SocialUsernamePageState extends State<SocialUsernamePage> {
         const SnackBar(content: Text('Application submitted. Status: pending')),
       );
       // Navigate to timeline; mark fromIntro so app remembers returning user
-      final normalized = username.startsWith('@') ? username : '@' + username;
+      final normalized = username.startsWith('@') ? username : '@$username';
       if (mounted) {
         context.goToVerificationTimeline(
           status: 'pending',
