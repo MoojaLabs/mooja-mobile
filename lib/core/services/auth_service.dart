@@ -31,8 +31,6 @@ class AuthService {
                 response.data['refreshToken'],
               );
             }
-            await _storageService.saveUserType('org');
-            await _storageService.saveIsFirstTime(false);
 
             return AuthResult.success(
               token: response.data['accessToken'],
@@ -114,10 +112,9 @@ class AuthService {
   Future<AuthResult?> getStoredAuth() async {
     try {
       final accessToken = await _storageService.readAuthToken();
-      final userType = await _storageService.readUserType();
 
-      if (accessToken != null && userType == 'org') {
-        // Return basic auth info
+      if (accessToken != null) {
+        // Return basic auth info for org users
         final user = <String, dynamic>{'type': 'org'};
         return AuthResult.success(token: accessToken, user: user);
       }

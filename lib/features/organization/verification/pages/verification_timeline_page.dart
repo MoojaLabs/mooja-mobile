@@ -93,10 +93,7 @@ class _VerificationTimelineView extends StatelessWidget {
                       if (state.status == 'approved') {
                         context.pushToCodeVerification();
                       } else {
-                        // Applicants are treated as protestors until verified
-                        final storage = sl<StorageService>();
-                        await storage.saveUserType('protestor');
-                        await storage.saveIsFirstTime(false);
+                        // Applicants switch to protestor feed until verified
                         if (!context.mounted) return;
                         context.goToProtestorFeed();
                       }

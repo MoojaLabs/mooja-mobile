@@ -3,6 +3,7 @@ import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../services/auth_service.dart';
 import '../services/user_context_service.dart';
+import '../services/country_detection_service.dart';
 import '../../features/protestor/feed/bloc/protests_bloc.dart';
 import '../../features/auth/bloc/auth_bloc.dart';
 import '../../features/organization/verification/bloc/verification_cubit.dart';
@@ -16,6 +17,9 @@ Future<void> setupServiceLocator() async {
   // Register services as singletons (stateful services)
   sl.registerLazySingleton<StorageService>(() => StorageService());
   sl.registerLazySingleton<ApiService>(() => ApiService());
+  sl.registerLazySingleton<CountryDetectionService>(
+    () => CountryDetectionService(),
+  );
   sl.registerLazySingleton<AuthService>(
     () => AuthService(sl<ApiService>(), sl<StorageService>()),
   );
@@ -33,9 +37,4 @@ Future<void> setupServiceLocator() async {
     () => ProtestsBloc(apiService: sl<ApiService>()),
   );
   sl.registerFactory<AuthBloc>(() => AuthBloc(authService: sl<AuthService>()));
-}
-
-/// Reset all dependencies (useful for testing)
-Future<void> resetServiceLocator() async {
-  await sl.reset();
 }

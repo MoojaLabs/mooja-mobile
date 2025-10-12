@@ -72,7 +72,8 @@ class _CodeVerificationPageState extends State<CodeVerificationPage> {
       final storage = sl<StorageService>();
 
       // Get the application ID from storage
-      final applicationId = await storage.readPendingApplicationId();
+      final pendingData = await storage.readPendingOrgData();
+      final applicationId = pendingData?.applicationId;
 
       if (applicationId == null || applicationId.isEmpty) {
         setState(() {
@@ -97,7 +98,7 @@ class _CodeVerificationPageState extends State<CodeVerificationPage> {
 
       if (orgUsername == null || orgUsername.isEmpty) {
         // Fallback: use stored username if backend doesn't return one
-        final storedUsername = await storage.readPendingOrgUsername();
+        final storedUsername = pendingData?.orgUsername;
         if (!mounted) return;
 
         if (storedUsername == null || storedUsername.isEmpty) {

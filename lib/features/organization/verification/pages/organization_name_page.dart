@@ -9,6 +9,7 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/di/service_locator.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../../core/models/pending_org_data.dart';
 import '../bloc/verification_cubit.dart';
 
 class OrganizationNamePage extends StatefulWidget {
@@ -56,7 +57,15 @@ class _OrganizationNamePageState extends State<OrganizationNamePage> {
 
     // Persist org name and navigate
     final storage = sl<StorageService>();
-    storage.savePendingOrgName(organizationName).whenComplete(() async {
+
+    () async {
+      final currentData = await storage.readPendingOrgData();
+      final updatedData =
+          currentData?.copyWith(orgName: organizationName) ??
+          PendingOrgData(orgName: organizationName);
+
+      await storage.savePendingOrgData(updatedData);
+    }().whenComplete(() async {
       await context.read<VerificationCubit>().setOrgName(organizationName);
       if (!mounted) return;
       setState(() => _isLoading = false);

@@ -5,6 +5,7 @@ import '../../../../core/themes/theme_exports.dart';
 import '../../../../core/constants/countries.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../../core/services/country_detection_service.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/domain/domain_objects.dart' as domain;
 import '../widgets/date_section_header.dart';
@@ -26,6 +27,7 @@ class ProtestorFeedPage extends StatefulWidget {
 class _ProtestorFeedPageState extends State<ProtestorFeedPage> {
   Country? _selectedCountry;
   late final StorageService _storage;
+  late final CountryDetectionService _countryDetectionService;
   bool _isInitialized = false;
   final Map<String, bool> _orgsCache = {};
   late final ProtestsBloc _protestsBloc;
@@ -38,6 +40,7 @@ class _ProtestorFeedPageState extends State<ProtestorFeedPage> {
   void initState() {
     super.initState();
     _storage = sl<StorageService>();
+    _countryDetectionService = sl<CountryDetectionService>();
     _protestsBloc = sl<ProtestsBloc>();
     _bootstrapFromStorage();
   }
@@ -53,6 +56,7 @@ class _ProtestorFeedPageState extends State<ProtestorFeedPage> {
     if (!mounted) return;
 
     if (code != null) {
+      // Use stored country (user has manually selected one)
       final country = kCountries.firstWhere(
         (c) => c.code == code,
         orElse: () => kCountries.first,
@@ -63,10 +67,33 @@ class _ProtestorFeedPageState extends State<ProtestorFeedPage> {
       });
       _protestsBloc.add(LoadProtests(country: country.code));
     } else {
-      setState(() {
-        _isInitialized = true;
-      });
-      _protestsBloc.add(const LoadProtests());
+      // No stored country - try to detect it
+      try {
+        final detectedCountry = await _countryDetectionService.detectCountry();
+        if (detectedCountry != null && mounted) {
+          final country = kCountries.firstWhere(
+            (c) => c.code == detectedCountry.value,
+            orElse: () => kCountries.first,
+          );
+          setState(() {
+            _selectedCountry = country;
+            _isInitialized = true;
+          });
+          _protestsBloc.add(LoadProtests(country: country.code));
+        } else {
+          // Fallback: load without country filter
+          setState(() {
+            _isInitialized = true;
+          });
+          _protestsBloc.add(const LoadProtests());
+        }
+      } catch (e) {
+        // On error, fallback to loading without country filter
+        setState(() {
+          _isInitialized = true;
+        });
+        _protestsBloc.add(const LoadProtests());
+      }
     }
   }
 

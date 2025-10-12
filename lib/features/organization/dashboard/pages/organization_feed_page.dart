@@ -105,9 +105,9 @@ class OrganizationFeedPage extends StatelessWidget {
     final userContext = sl<UserContextService>();
     await userContext.clearAllUserData();
 
-    // Navigate back to intro
+    // Navigate back to splash after logout
     if (context.mounted) {
-      context.goToIntro();
+      context.goToSplash();
     }
   }
 }

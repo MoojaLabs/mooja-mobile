@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../../core/models/pending_org_data.dart';
 import '../../../../core/domain/domain_objects.dart';
 
 class VerificationState {
@@ -55,27 +56,38 @@ class VerificationCubit extends Cubit<VerificationState> {
   }
 
   Future<void> setOrgName(String name) async {
-    await storage.savePendingOrgName(name);
+    final currentData = await storage.readPendingOrgData();
+    final updatedData =
+        currentData?.copyWith(orgName: name) ?? PendingOrgData(orgName: name);
+    await storage.savePendingOrgData(updatedData);
     emit(state.copyWith(orgName: name, errorMessage: null));
   }
 
   Future<void> setPlatform(String platform) async {
-    await storage.savePendingSocialPlatform(platform);
+    final currentData = await storage.readPendingOrgData();
+    final updatedData =
+        currentData?.copyWith(socialPlatform: platform) ??
+        PendingOrgData(socialPlatform: platform);
+    await storage.savePendingOrgData(updatedData);
     emit(state.copyWith(socialPlatform: platform, errorMessage: null));
   }
 
   Future<void> setHandle(String handle) async {
     final normalized = handle.startsWith('@') ? handle : '@$handle';
-    await storage.savePendingSocialHandle(normalized);
+    final currentData = await storage.readPendingOrgData();
+    final updatedData =
+        currentData?.copyWith(socialHandle: normalized) ??
+        PendingOrgData(socialHandle: normalized);
+    await storage.savePendingOrgData(updatedData);
     emit(state.copyWith(socialHandle: normalized, errorMessage: null));
   }
 
   Future<void> submit() async {
     final country =
         state.countryCode ?? await storage.readSelectedCountryCode();
-    final name = state.orgName ?? await storage.readPendingOrgName();
-    final platform =
-        state.socialPlatform ?? await storage.readPendingSocialPlatform();
+    final pendingData = await storage.readPendingOrgData();
+    final name = state.orgName ?? pendingData?.orgName;
+    final platform = state.socialPlatform ?? pendingData?.socialPlatform;
     final handle = state.socialHandle;
 
     if (country == null || country.isEmpty) {
@@ -114,11 +126,20 @@ class VerificationCubit extends Cubit<VerificationState> {
       // Persist backend-generated identifiers for consistent status lookups
       final backendUsername = result['org']?['username'] as String?;
       final applicationId = result['org']?['id'] as String?;
-      if (backendUsername != null && backendUsername.isNotEmpty) {
-        await storage.savePendingOrgUsername(backendUsername);
-      }
-      if (applicationId != null && applicationId.isNotEmpty) {
-        await storage.savePendingApplicationId(applicationId);
+
+      if (backendUsername != null && backendUsername.isNotEmpty ||
+          applicationId != null && applicationId.isNotEmpty) {
+        final currentData = await storage.readPendingOrgData();
+        final updatedData =
+            currentData?.copyWith(
+              orgUsername: backendUsername,
+              applicationId: applicationId,
+            ) ??
+            PendingOrgData(
+              orgUsername: backendUsername,
+              applicationId: applicationId,
+            );
+        await storage.savePendingOrgData(updatedData);
       }
       emit(state.copyWith(isSubmitting: false, errorMessage: null));
     } catch (e) {

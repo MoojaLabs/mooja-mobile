@@ -79,13 +79,12 @@ class _SocialUsernamePageState extends State<SocialUsernamePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Application submitted. Status: pending')),
       );
-      // Navigate to timeline; mark fromIntro so app remembers returning user
+      // Navigate to timeline
       final normalized = username.startsWith('@') ? username : '@$username';
       if (mounted) {
         context.goToVerificationTimeline(
           status: 'pending',
           username: normalized,
-          fromIntro: true,
         );
       }
     } catch (e) {

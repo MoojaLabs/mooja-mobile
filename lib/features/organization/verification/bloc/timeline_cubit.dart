@@ -54,7 +54,8 @@ class TimelineCubit extends Cubit<TimelineState> {
 
     try {
       // Get application ID from storage
-      final appId = await _storageService.readPendingApplicationId();
+      final pendingData = await _storageService.readPendingOrgData();
+      final appId = pendingData?.applicationId;
 
       if (appId == null || appId.isEmpty) {
         emit(state.copyWith(isLoading: false, error: 'No application found'));

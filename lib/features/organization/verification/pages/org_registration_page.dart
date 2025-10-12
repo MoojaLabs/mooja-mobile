@@ -81,11 +81,10 @@ class _OrgRegistrationPageState extends State<OrgRegistrationPage> {
       final storage = sl<StorageService>();
 
       // Get stored org data
-      final orgName = await storage.readPendingOrgName();
+      final pendingData = await storage.readPendingOrgData();
       final country = await storage.readSelectedCountryCode();
-      final applicationId = await storage.readPendingApplicationId();
 
-      if (orgName == null || country == null || applicationId == null) {
+      if (pendingData == null || !pendingData.isComplete || country == null) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -98,9 +97,11 @@ class _OrgRegistrationPageState extends State<OrgRegistrationPage> {
         return;
       }
 
+      final applicationId = pendingData.applicationId;
+
       // Register the organization account by application id
       final response = await apiService.registerWithApplicationId(
-        applicationId: ApplicationId(applicationId),
+        applicationId: ApplicationId(applicationId!),
         username: Username(username),
         password: Password(password),
       );

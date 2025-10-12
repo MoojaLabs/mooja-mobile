@@ -7,24 +7,17 @@ import '../../../../core/widgets/buttons/app_back_button.dart';
 import '../../../../core/widgets/inputs/app_input.dart';
 import '../../../../core/widgets/app_chip.dart';
 import '../../../../core/constants/countries.dart';
-import '../../../../core/constants/flow_origin.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../../core/models/pending_org_data.dart';
 import '../../../../core/di/service_locator.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/verification_cubit.dart';
 
 class CountrySelectionPage extends StatefulWidget {
-  const CountrySelectionPage({
-    super.key,
-    this.forOrganizationFlow = false,
-    this.stepLabel,
-    this.origin = FlowOrigin.unknown,
-  });
+  const CountrySelectionPage({super.key, this.forOrganizationFlow = false});
 
   final bool forOrganizationFlow;
-  final String? stepLabel;
-  final FlowOrigin origin;
 
   @override
   State<CountrySelectionPage> createState() => _CountrySelectionPageState();
@@ -132,9 +125,7 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
               child: Transform.rotate(
                 angle: -10 * math.pi / 180,
                 child: AppChip(
-                  label:
-                      widget.stepLabel ??
-                      (widget.forOrganizationFlow ? 'step 01' : 'step 02'),
+                  label: widget.forOrganizationFlow ? 'step 01' : 'step 02',
                   backgroundColor: AppColors.lemon,
                 ),
               ),
@@ -280,6 +271,18 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
                       await _storage.saveSelectedCountryCode(
                         _selectedCountry!.code,
                       );
+
+                      if (widget.forOrganizationFlow) {
+                        // For org flow, also save to pending org data
+                        final currentData = await _storage.readPendingOrgData();
+                        final updatedData =
+                            currentData?.copyWith(
+                              country: _selectedCountry!.code,
+                            ) ??
+                            PendingOrgData(country: _selectedCountry!.code);
+                        await _storage.savePendingOrgData(updatedData);
+                      }
+
                       // Update cubit state (org + protestor flows share this)
                       await context.read<VerificationCubit>().setCountry(
                         _selectedCountry!.code,
@@ -291,19 +294,11 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
                         return;
                       }
 
-                      // Protestor flow: set user type and finish correctly based on origin
-                      await _storage.saveUserType('protestor');
-                      await _storage.saveIsFirstTime(false);
-                      if (widget.origin == FlowOrigin.intro) {
-                        // Coming from intro: replace to feed
-                        context.goToHome();
+                      // Always pop back to previous screen, or go home if can't pop
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop(_selectedCountry);
                       } else {
-                        // Coming from other places: pop to previous
-                        if (Navigator.of(context).canPop()) {
-                          Navigator.of(context).pop(_selectedCountry);
-                        } else {
-                          context.goToHome();
-                        }
+                        context.goToHome();
                       }
                     }
                   : null,
