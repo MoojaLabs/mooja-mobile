@@ -9,6 +9,7 @@ import '../../../../core/widgets/app_chip.dart';
 import '../../../../core/di/service_locator.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../../core/models/pending_org_data.dart';
 import '../bloc/verification_cubit.dart';
 
 class SocialMediaSelectionPage extends StatefulWidget {
@@ -67,15 +68,21 @@ class _SocialMediaSelectionPageState extends State<SocialMediaSelectionPage> {
 
     // Navigate to username input screen
     final storage = sl<StorageService>();
-    storage.savePendingSocialPlatform(_selectedSocialMedia!).whenComplete(
-      () async {
-        await context.read<VerificationCubit>().setPlatform(
-          _selectedSocialMedia!,
-        );
-        if (!mounted) return;
-        context.pushToSocialUsername(_selectedSocialMedia!);
-      },
-    );
+
+    () async {
+      final currentData = await storage.readPendingOrgData();
+      final updatedData =
+          currentData?.copyWith(socialPlatform: _selectedSocialMedia!) ??
+          PendingOrgData(socialPlatform: _selectedSocialMedia!);
+
+      await storage.savePendingOrgData(updatedData);
+    }().whenComplete(() async {
+      await context.read<VerificationCubit>().setPlatform(
+        _selectedSocialMedia!,
+      );
+      if (!mounted) return;
+      context.pushToSocialUsername(_selectedSocialMedia!);
+    });
   }
 
   @override

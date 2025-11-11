@@ -4,8 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../di/service_locator.dart';
 import '../services/storage_service.dart';
 import '../services/user_context_service.dart';
-import '../constants/flow_origin.dart';
-import '../../features/intro/intro_page.dart';
+import '../../features/splash/pages/splash_page.dart';
 import '../../features/auth/login_page.dart';
 import '../../features/auth/signup_page.dart';
 import '../../features/auth/bloc/auth_bloc.dart';
@@ -30,7 +29,7 @@ import '../state/state_validator.dart';
 // Route path constants - single source of truth
 abstract class AppRoutes {
   // Public routes
-  static const intro = '/intro';
+  static const splash = '/';
   static const login = '/login';
   static const signup = '/signup';
   static const countrySelection = '/country-selection';
@@ -55,15 +54,15 @@ class AppRouter {
       RouteObserver<ModalRoute<void>>();
 
   static final GoRouter router = GoRouter(
-    initialLocation: AppRoutes.intro,
+    initialLocation: AppRoutes.splash,
     debugLogDiagnostics: false,
     observers: [routeObserver],
     routes: <RouteBase>[
       // Public routes (no auth required)
       GoRoute(
-        path: AppRoutes.intro,
-        name: 'intro',
-        builder: (context, state) => const IntroPage(),
+        path: AppRoutes.splash,
+        name: 'splash',
+        builder: (context, state) => const SplashPage(),
       ),
 
       GoRoute(
@@ -83,15 +82,9 @@ class AppRouter {
         name: 'countrySelection',
         builder: (context, state) {
           final isOrgFlow = state.uri.queryParameters['orgFlow'] == '1';
-          final stepLabel = state.uri.queryParameters['stepLabel'];
-          final origin = state.extra as FlowOrigin? ?? FlowOrigin.unknown;
           return BlocProvider(
             create: (_) => sl<VerificationCubit>(),
-            child: CountrySelectionPage(
-              forOrganizationFlow: isOrgFlow,
-              stepLabel: stepLabel,
-              origin: origin,
-            ),
+            child: CountrySelectionPage(forOrganizationFlow: isOrgFlow),
           );
         },
       ),
@@ -182,28 +175,24 @@ class AppRouter {
                 // Always allow switching to For You tab
                 navigationShell.goBranch(0);
               } else if (newTab == TabType.forOrganizations) {
-                // Use UserContextService to determine org access
+                // Simplified org access logic with direct checks
                 final userContext = sl<UserContextService>();
                 final canAccess = await userContext.canAccessOrgFeatures();
 
                 if (canAccess) {
-                  // User is verified org, allow access
+                  // Case 1: Logged in org - allow access
                   navigationShell.goBranch(1);
                 } else {
-                  // Determine where to send them based on journey
-                  final journey = await userContext.getCurrentJourney();
+                  // Check for pending application directly
+                  final pendingData = await sl<StorageService>()
+                      .readPendingOrgData();
                   if (context.mounted) {
-                    switch (journey) {
-                      case UserJourney.orgPending:
-                        // Has applied before - go to verification timeline
-                        context.go('/verification-timeline');
-                        break;
-                      case UserJourney.firstTime:
-                      case UserJourney.protestorActive:
-                      default:
-                        // Show eligibility modal directly (not intro page)
-                        _showOrgVerificationModalFromFeed(context);
-                        break;
+                    if (pendingData?.applicationId != null) {
+                      // Case 2: Pending org - go to timeline
+                      context.go('/verification-timeline');
+                    } else {
+                      // Case 3: New user - show eligibility modal
+                      _showOrgVerificationModalFromFeed(context);
                     }
                   }
                 }
@@ -241,9 +230,7 @@ class AppRouter {
         return await NavigationGuard.getSafeRoute();
       }
 
-      final storage = sl<StorageService>();
-      final isFirstTime = await storage.readIsFirstTime();
-      final userType = await storage.readUserType();
+      final userContext = sl<UserContextService>();
 
       // Check if navigation is valid (only if actually navigating somewhere)
       if (state.uri.toString() != state.matchedLocation) {
@@ -257,52 +244,24 @@ class AppRouter {
         }
       } else {}
 
-      // For first-time users, allow them to go through their respective flows
-      if (isFirstTime) {
-        // Allow access to intro and all auth/onboarding pages
-        final allowedFirstTimeRoutes = [
-          AppRoutes.intro,
-          AppRoutes.countrySelection,
-          AppRoutes.organizationName,
-          AppRoutes.socialMediaSelection,
-          AppRoutes.socialUsername,
-          AppRoutes.verificationTimeline,
-          AppRoutes.statusLookup,
-          AppRoutes.codeVerification,
-          AppRoutes.orgRegistration,
-          AppRoutes.login,
-          AppRoutes.signup,
-        ];
+      // Allow all users to access routes (splash handles routing)
+      {
+        // Simplified redirect logic with direct checks
+        if (state.matchedLocation == AppRoutes.splash) {
+          final canAccess = await userContext.canAccessOrgFeatures();
+          final pendingData = await sl<StorageService>().readPendingOrgData();
 
-        // If user has a pending application, allow feed access as protestor
-        final pendingAppId = await storage.readPendingApplicationId();
-        final pendingUsername = await storage.readPendingOrgUsername();
-        final hasPending =
-            (pendingAppId != null && pendingAppId.isNotEmpty) ||
-            (pendingUsername != null && pendingUsername.isNotEmpty);
-
-        final isFeed = state.matchedLocation == AppRoutes.protestorFeed;
-
-        // Only redirect if trying to access protected routes (like feed pages)
-        if (!allowedFirstTimeRoutes.contains(state.matchedLocation) &&
-            !(hasPending && isFeed)) {
-          return AppRoutes.intro;
-        }
-      } else {
-        // For returning users, redirect based on user type
-        if (userType == 'protestor') {
-          // Returning protestors should go to feed, not intro
-          if (state.matchedLocation == AppRoutes.intro) {
+          if (canAccess) {
+            // Returning orgs with token should not see splash
+            return AppRoutes.organizationFeed;
+          } else if (pendingData?.applicationId != null) {
+            // Pending orgs should go to timeline, not splash
+            return '/verification-timeline';
+          } else {
+            // Returning protestors should go to feed, not splash
             return AppRoutes.protestorFeed;
           }
-        } else if (userType == 'org') {
-          // Returning orgs with token should not see intro on cold start
-          final hasToken = await sl<StorageService>().hasAuthToken();
-          if (hasToken && state.matchedLocation == AppRoutes.intro) {
-            return AppRoutes.organizationFeed;
-          }
         }
-        // For orgs without token, let the tab navigation handle the routing logic
       }
       return null;
     },
@@ -327,7 +286,7 @@ class AppRouter {
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () => context.goToIntro(),
+                onPressed: () => context.go(AppRoutes.splash),
                 child: const Text('Go Back'),
               ),
             ],
@@ -376,17 +335,15 @@ void _showNotEligibleModalFromFeed(BuildContext context) {
 
 extension NavigationExtensions on BuildContext {
   // Current navigation methods
+  void goToSplash() => go(AppRoutes.splash);
   void goToLogin() => go(AppRoutes.login);
   Future<T?> pushToLogin<T>() => GoRouter.of(this).push<T>(AppRoutes.login);
-  void goToIntro() => go(AppRoutes.intro);
   void goToSignup() => go(AppRoutes.signup);
   void goToCountrySelection() => go(AppRoutes.countrySelection);
-  Future<T?> pushToCountrySelection<T>({
-    FlowOrigin origin = FlowOrigin.unknown,
-  }) => GoRouter.of(this).push<T>(AppRoutes.countrySelection, extra: origin);
-  Future<T?> pushToCountrySelectionForOrg<T>() => GoRouter.of(
-    this,
-  ).push<T>('${AppRoutes.countrySelection}?orgFlow=1&stepLabel=step%2001');
+  Future<T?> pushToCountrySelection<T>() =>
+      GoRouter.of(this).push<T>(AppRoutes.countrySelection);
+  Future<T?> pushToCountrySelectionForOrg<T>() =>
+      GoRouter.of(this).push<T>('${AppRoutes.countrySelection}?orgFlow=1');
   void goToOrganizationName() => go(AppRoutes.organizationName);
   Future<T?> pushToOrganizationName<T>() =>
       GoRouter.of(this).push<T>(AppRoutes.organizationName);
@@ -401,9 +358,8 @@ extension NavigationExtensions on BuildContext {
   void goToVerificationTimeline({
     String status = 'pending',
     String? username,
-    bool fromIntro = false,
   }) => go(
-    '${AppRoutes.verificationTimeline}?status=$status${username != null ? '&username=$username' : ''}${fromIntro ? '&from=intro' : ''}',
+    '${AppRoutes.verificationTimeline}?status=$status${username != null ? '&username=$username' : ''}',
   );
   void goToCodeVerification() => go(AppRoutes.codeVerification);
   Future<T?> pushToCodeVerification<T>() =>
@@ -421,10 +377,10 @@ extension NavigationExtensions on BuildContext {
   void goToOrganizationFeed() => go(AppRoutes.organizationFeed);
 
   // Check current route
+  bool get isSplashPage =>
+      GoRouterState.of(this).matchedLocation == AppRoutes.splash;
   bool get isLoginPage =>
       GoRouterState.of(this).matchedLocation == AppRoutes.login;
-  bool get isIntroPage =>
-      GoRouterState.of(this).matchedLocation == AppRoutes.intro;
   bool get isSignupPage =>
       GoRouterState.of(this).matchedLocation == AppRoutes.signup;
   bool get isCountrySelectionPage =>

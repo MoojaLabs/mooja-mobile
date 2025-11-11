@@ -12,6 +12,8 @@
 .swiftpm/
 .cursor/
 migrate_working_dir/
+notes.md
+journeys/
 
 # IntelliJ related
 *.iml

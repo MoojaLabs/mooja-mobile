@@ -1,4 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../models/pending_org_data.dart';
+import 'dart:convert';
 
 /// Secure storage service for tokens and user data
 class StorageService {
@@ -48,13 +50,7 @@ class StorageService {
 
   // ========== App Preferences ==========
   static const String _keySelectedCountry = 'selected_country_code';
-  static const String _keyUserType = 'user_type'; // protestor | org
-  static const String _keyIsFirstTime = 'is_first_time'; // 'true' | 'false'
-  static const String _keyPendingOrgName = 'pending_org_name';
-  static const String _keyPendingSocialPlatform = 'pending_social_platform';
-  static const String _keyPendingSocialHandle = 'pending_social_handle';
-  static const String _keyPendingOrgUsername = 'pending_org_username';
-  static const String _keyPendingApplicationId = 'pending_application_id';
+  static const String _keyPendingOrgData = 'pending_org_data';
 
   // Selected country
   Future<void> saveSelectedCountryCode(String countryCode) async {
@@ -65,102 +61,21 @@ class StorageService {
     return await _storage.read(key: _keySelectedCountry);
   }
 
-  Future<void> deleteSelectedCountryCode() async {
-    await _storage.delete(key: _keySelectedCountry);
+  // ========== Pending Organization Data ==========
+  /// Save pending organization verification data (atomic operation)
+  Future<void> savePendingOrgData(PendingOrgData data) async {
+    await _storage.write(key: _keyPendingOrgData, value: data.toJsonString());
   }
 
-  // User type
-  Future<void> saveUserType(String userType) async {
-    await _storage.write(key: _keyUserType, value: userType);
-  }
-
-  Future<String?> readUserType() async {
-    return await _storage.read(key: _keyUserType);
-  }
-
-  // First-time flag (defaults to true when not set)
-  Future<void> saveIsFirstTime(bool isFirstTime) async {
-    await _storage.write(key: _keyIsFirstTime, value: isFirstTime.toString());
-  }
-
-  Future<bool> readIsFirstTime() async {
-    final value = await _storage.read(key: _keyIsFirstTime);
-    if (value == null) return true;
-    return value.toLowerCase() == 'true';
-  }
-
-  // Pending organization verification data
-  Future<void> savePendingOrgName(String name) async {
-    await _storage.write(key: _keyPendingOrgName, value: name);
-  }
-
-  Future<String?> readPendingOrgName() async {
-    return await _storage.read(key: _keyPendingOrgName);
-  }
-
-  Future<void> deletePendingOrgName() async {
-    await _storage.delete(key: _keyPendingOrgName);
-  }
-
-  Future<void> savePendingSocialPlatform(String platform) async {
-    await _storage.write(key: _keyPendingSocialPlatform, value: platform);
-  }
-
-  Future<String?> readPendingSocialPlatform() async {
-    return await _storage.read(key: _keyPendingSocialPlatform);
-  }
-
-  Future<void> deletePendingSocialPlatform() async {
-    await _storage.delete(key: _keyPendingSocialPlatform);
-  }
-
-  // Pending social handle (normalized with leading @)
-  Future<void> savePendingSocialHandle(String handle) async {
-    await _storage.write(key: _keyPendingSocialHandle, value: handle);
-  }
-
-  Future<String?> readPendingSocialHandle() async {
-    return await _storage.read(key: _keyPendingSocialHandle);
-  }
-
-  Future<void> deletePendingSocialHandle() async {
-    await _storage.delete(key: _keyPendingSocialHandle);
-  }
-
-  // Backend-generated pending org username (used for status lookups)
-  Future<void> savePendingOrgUsername(String username) async {
-    await _storage.write(key: _keyPendingOrgUsername, value: username);
-  }
-
-  Future<String?> readPendingOrgUsername() async {
-    return await _storage.read(key: _keyPendingOrgUsername);
-  }
-
-  Future<void> deletePendingOrgUsername() async {
-    await _storage.delete(key: _keyPendingOrgUsername);
-  }
-
-  // Backend-generated application id (org.id)
-  Future<void> savePendingApplicationId(String id) async {
-    await _storage.write(key: _keyPendingApplicationId, value: id);
-  }
-
-  Future<String?> readPendingApplicationId() async {
-    return await _storage.read(key: _keyPendingApplicationId);
-  }
-
-  Future<void> deletePendingApplicationId() async {
-    await _storage.delete(key: _keyPendingApplicationId);
+  /// Read pending organization verification data
+  Future<PendingOrgData?> readPendingOrgData() async {
+    final jsonString = await _storage.read(key: _keyPendingOrgData);
+    if (jsonString == null) return null;
+    return PendingOrgData.fromJsonString(jsonString);
   }
 
   /// Clear all pending organization verification data
   Future<void> clearPendingOrgData() async {
-    await Future.wait([
-      deletePendingOrgName(),
-      deletePendingSocialPlatform(),
-      deletePendingSocialHandle(),
-      deletePendingOrgUsername(),
-      deletePendingApplicationId(),
-    ]);
+    await _storage.delete(key: _keyPendingOrgData);
   }
 }
